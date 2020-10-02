@@ -3,7 +3,9 @@
   <PropertyGroup>
     <Guid>4de40b9b-43d5-427d-9417-705b8c6cd957</Guid>
     <Name>Interchangeable Upgrades/PCS By Default</Name>
-    <Description>Enables Reusable Upgrades and PCS by default/at the start of the campaign.</Description>
+    <Description>Enables Reusable Upgrades and PCS by default.
+
+tags= War Of The Chosen, Gameplay, Breakthrough</Description>
     <SteamPublishID>0</SteamPublishID>
     <AssemblyName>InterchangeableUpgradesAndPCSByDefault</AssemblyName>
     <RootNamespace>InterchangeableUpgradesAndPCSByDefault</RootNamespace>

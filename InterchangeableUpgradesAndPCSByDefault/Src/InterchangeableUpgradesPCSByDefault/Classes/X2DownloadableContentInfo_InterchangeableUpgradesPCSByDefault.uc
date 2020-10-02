@@ -10,6 +10,8 @@
 
 class X2DownloadableContentInfo_InterchangeableUpgradesPCSByDefault extends X2DownloadableContentInfo;
 
+var config bool bInterchangeable_Log; // Logging
+
 var config bool bInterchangeableUpgrades;
 var config bool bInterchangeablePCS;
 
@@ -47,6 +49,8 @@ static function HandleInterchangeableUpgradesPCS(XComGameState NewGameState) {
     local XComGameState_HeadquartersXCom XComHQ;
     local bool bSubmitLocally;
 
+	`log("Handling Interchangeable Upgrades and PCS", default.bInterchangeable_Log , 'InterchangeableUpgradesAndPCSByDefault');
+
     if (NewGameState == none) { // If the StartState isn't passed (In the case of the OLSG Hook), create a new Change State to be submitted.
 
         bSubmitLocally = true;
@@ -56,7 +60,9 @@ static function HandleInterchangeableUpgradesPCS(XComGameState NewGameState) {
 
     XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', `XCOMHQ.ObjectID));
 	XComHQ.bReuseUpgrades = default.bInterchangeableUpgrades;
+	`log("Interchangeable Upgrades are set to: " @ XComHQ.bReuseUpgrades, default.bInterchangeable_Log, 'InterchangeableUpgradesAndPCSByDefault');
 	XComHQ.bReusePCS = default.bInterchangeablePCS;
+	`log("Interchangeable PCS is set to: " @ XComHQ.bReusePCS, default.bInterchangeable_Log, 'InterchangeableUpgradesAndPCSByDefault');
 
     if(bSubmitLocally) { // New Game States should only be submitted if the campaign isn't being bootstrapped.
 	 
