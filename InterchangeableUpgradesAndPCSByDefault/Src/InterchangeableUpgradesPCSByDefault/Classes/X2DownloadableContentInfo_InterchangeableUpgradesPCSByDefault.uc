@@ -10,7 +10,7 @@
 
 class X2DownloadableContentInfo_InterchangeableUpgradesPCSByDefault extends X2DownloadableContentInfo;
 
-var config bool bInterchangeable_Log; // Logging
+var config bool bIUAPBD_Log; // Logging
 
 var config bool bInterchangeableUpgrades;
 var config bool bInterchangeablePCS;
@@ -23,7 +23,7 @@ var config bool bInterchangeablePCS;
 static event OnLoadedSavedGame() {
 	
 	// Ensure Reusable Upgrades and PCSs are enabled on existing saves:
-	HandleInterchangeableUpgradesPCS(none); // Pass none as an argument so a New Game State isn't defined.
+	if(default.bInterchangeableUpgrades || default.bInterchangeablePCS) HandleInterchangeableUpgradesPCS(none); // Pass none as an argument so a New Game State isn't defined.
 
 }
 
@@ -32,15 +32,14 @@ static event OnLoadedSavedGame() {
 /// </summary>
 static event InstallNewCampaign(XComGameState StartState) {
 	
-	// Enable Reusables Upgrades and PCSs on campaign start:
-	HandleInterchangeableUpgradesPCS(StartState);  
+	// Enable Reusable Upgrades and PCSs on campaign start:
+	if(default.bInterchangeableUpgrades || default.bInterchangeablePCS) HandleInterchangeableUpgradesPCS(StartState);  
 
 }
 
-static event OnPostCreatedTemplates() {
+static event OnPostTemplatesCreated() {
 
-	HideVanillaTechTemplates(); // Prevent the Reusable Attachment and PCS Breakthroughs from showing-up, since they're redundant now.
-	EditNewTechTemplates(); // Hide the Reusable Attachment and PCS Breakthrough Breakthrough Bonuses if they're already researched.
+	if(default.bInterchangeableUpgrades || default.bInterchangeablePCS) HandleVanillaTechTemplates(); // Prevent the Reusable Attachment and PCS Breakthroughs from showing-up, since they're redundant now.
 
 }
 
@@ -49,20 +48,20 @@ static function HandleInterchangeableUpgradesPCS(XComGameState NewGameState) {
     local XComGameState_HeadquartersXCom XComHQ;
     local bool bSubmitLocally;
 
-	`log("Handling Interchangeable Upgrades and PCS", default.bInterchangeable_Log , 'InterchangeableUpgradesAndPCSByDefault');
+	`log("Handling Interchangeable Upgrades and PCS", default.bIUAPBD_Log , 'InterchangeableUpgradesAndPCSByDefault');
 
     if (NewGameState == none) { // If the StartState isn't passed (In the case of the OLSG Hook), create a new Change State to be submitted.
 
         bSubmitLocally = true;
-        NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("PA: Forcing Lock And Load");
+        NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("IUAPBD: Handling Interchangeable Upgrades And PCS");
 
     }
 
     XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', `XCOMHQ.ObjectID));
-	XComHQ.bReuseUpgrades = default.bInterchangeableUpgrades;
-	`log("Interchangeable Upgrades are set to: " @ XComHQ.bReuseUpgrades, default.bInterchangeable_Log, 'InterchangeableUpgradesAndPCSByDefault');
-	XComHQ.bReusePCS = default.bInterchangeablePCS;
-	`log("Interchangeable PCS is set to: " @ XComHQ.bReusePCS, default.bInterchangeable_Log, 'InterchangeableUpgradesAndPCSByDefault');
+	if(default.bInterchangeableUpgrades) XComHQ.bReuseUpgrades = true;
+	`log("Interchangeable Upgrades are set to: " @ XComHQ.bReuseUpgrades, default.bIUAPBD_Log, 'InterchangeableUpgradesAndPCSByDefault');
+	if(default.bInterchangeablePCS) XComHQ.bReusePCS = true;
+	`log("Interchangeable PCS is set to: " @ XComHQ.bReusePCS, default.bIUAPBD_Log, 'InterchangeableUpgradesAndPCSByDefault');
 
     if(bSubmitLocally) { // New Game States should only be submitted if the campaign isn't being bootstrapped.
 	 
@@ -71,7 +70,7 @@ static function HandleInterchangeableUpgradesPCS(XComGameState NewGameState) {
     }
 }
 
-static function HideVanillaTechTemplates() {
+static function HandleVanillaTechTemplates() {
 
 	local X2StrategyElementTemplateManager StratMgr;
 	local array<name> arrTemplateName;
@@ -79,13 +78,15 @@ static function HideVanillaTechTemplates() {
 	local X2TechTemplate TechTemplate;
 	local int i, j;
 
+	`log("Handling Vanilla Tech Templates", default.bIUAPBD_Log ,'InterchangeableUpgradesAndPCSByDefault');
+
 	// Access StrategyElement Template Manager
 	StratMgr = class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager();
 
 	// List all Vanilla Tech Templates by names
-	arrTemplateName.AddItem('BreakthroughReuseWeaponUpgrades');
-	arrTemplateName.AddItem('BreakthroughReusePCS');
-	
+	if(default.bInterchangeableUpgrades) arrTemplateName.AddItem('BreakthroughReuseWeaponUpgrades');
+	if(default.bInterchangeablePCS) arrTemplateName.AddItem('BreakthroughReusePCS');
+
 	for (i = 0; i < arrTemplateName.Length; i++) {		
 
 		// Reset Vanilla Tech Templates for all difficulties
@@ -104,6 +105,7 @@ static function HideVanillaTechTemplates() {
 
 			// Hide Vanilla Tech Template
 			TechTemplate.Requirements.SpecialRequirementsFn = HideTech;
+			`log("Hid: " @ arrTechTemplate[j], default.bIUAPBD_Log ,'InterchangeableUpgradesAndPCSByDefault');
 
 		}
 	}
@@ -113,46 +115,4 @@ static function bool HideTech() {
 
 	return false;
 
-}
-
-static function EditNewTechTemplates() {
-
-	local X2StrategyElementTemplateManager StratMgr;
-	local array<name> arrTemplateName;
-	local array<X2DataTemplate> arrTechTemplate;
-	local X2TechTemplate TechTemplate;
-	local int i, j;
-
-	// Access StrategyElement Template Manager
-	StratMgr = class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager();
-
-	// List all New Tech Templates by names
-	arrTemplateName.AddItem('GuaranteedReuseWeaponUpgrades');
-	arrTemplateName.AddItem('GuaranteedReusePCS');
-	
-	for (i = 0; i < arrTemplateName.Length; i++) {		
-
-		// Reset New Tech Templates for all difficulties
-		arrTechTemplate.Length = 0;
-		
-		// Access New Tech Templates for all difficulties
-		StratMgr.FindDataTemplateAllDifficulties(arrTemplateName[i], arrTechTemplate);
-
-		for (j = 0; j < arrTechTemplate.Length; j++) {
-
-			// Access New Tech Template
-			TechTemplate = X2TechTemplate(arrTechTemplate[j]);
-			
-			// Hide New Tech Template if Vanilla Tech is already researched
-			if (TechTemplate.DataName == 'GuaranteedReuseWeaponUpgrades') {
-
-				TechTemplate.UnavailableIfResearched = 'BreakthroughReuseWeaponUpgrades';
-
-			} else if (TechTemplate.DataName == 'GuaranteedReusePCS') {
-
-				TechTemplate.UnavailableIfResearched = 'BreakthroughReusePCS';
-
-			}
-		}
-	}
 }
